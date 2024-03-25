@@ -71,12 +71,14 @@ ggplot() +
   coord_sf(xlim = c(-72, -67), ylim = c(42, 45))
 
 ```
+
 ## Retrieve comment from layer
 
 ```{r}
 # Can retrieve comment from layer by passing verbose = T
 gglyr('gom_bathy', verbose = T)
 ```
+
 ## Zoom a ggplot to the bounds of an SF layer
 
 `gg_bound_sf(sf_layer)`
@@ -94,6 +96,7 @@ ggplot() +
   gg_bound_sf(distance) +
   labs(x = 'Longitude', y = 'Latitude')
 ```
+
 
 ## What if the source spatial data changes??
 

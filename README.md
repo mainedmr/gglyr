@@ -133,8 +133,9 @@ ggplot() +
     ## old-style crs object detected; please recreate object with a recent sf::st_crs()
     ## old-style crs object detected; please recreate object with a recent sf::st_crs()
 
-![](README_files/figure-markdown_github/unnamed-chunk-5-1.png) \##
-Retrieve comment from layer
+![](README_files/figure-markdown_github/unnamed-chunk-5-1.png)
+
+## Retrieve comment from layer
 
 ``` r
 # Can retrieve comment from layer by passing verbose = T
