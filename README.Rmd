@@ -8,3 +8,130 @@ output:
 
 #gglyr
 
+Abstraction of mapping layers in ggplot2 for quick creation of high quality maps.
+
+## Set library path and view library layers
+
+```{r}
+library(tidyverse)
+library(sf)
+library(gglyr)
+# Set gglyr library - this can be relative or absolute path. No support for URLs yet
+gglyr_set_lib('c:/gglyr_lib')
+# Testing retrieving currently set lib
+gglyr_get_lib()
+# Can list all the layers in the current lib
+gglyr_list_lyrs()
+```
+## Create and add a layer to the library
+
+```{r}
+# Load spatial data from remote URL
+dist_from_shore <- geojsonsf::geojson_sf('https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/MaineDMR_Distance_From_Shore/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson')
+dist_from_shore <- dist_from_shore %>%
+  dplyr::select(distance = Waters, zone = Zone, geometry)
+
+# Make a ggproto and save it with gglyr_save
+geom_sf(data = dist_from_shore, fill = NA, color = 'grey', inherit.aes = F) %>%
+  gglyr_save(., 'maine_zone_dist_no_ol',
+           'Maine lobster zones/distance from shore intersection with no overlaps, overlaps as zone C/D etc.')
+```
+
+## Load a layer from the library
+
+```{r}
+ggplot() +
+  gglyr('maine_zone_dist_no_ol')
+```
+Data can be extracted from ggproto back to SF object if needed:
+
+```{r}
+proto <- gglyr('maine_zone_dist_no_ol')
+distance <- proto[[1]]$data
+class(distance)
+```
+## Multiple layers stacked
+
+Can save multiple ggplot layers together as a list, ie, these layers were loaded from boundaries.Rda as SF objects - to make it easier to edit layer aesthetics, pass list names (vs numeric indices if none present).
+
+```{r}
+load('boundaries.Rda')
+
+list(
+  '3NM' = geom_sf(data = three_nm, color = 'darkorchid4', inherit.aes = F),
+  '12NM' = geom_sf(data = twelve_nm, color = 'darkred', inherit.aes = F),
+  '24NM' = geom_sf(data = twenty_four_nm, color = 'darkgreen', inherit.aes = F),
+  'EEZ' = geom_sf(data = eez, color = 'grey', linetype = '21', inherit.aes = F)
+) %>%
+  gglyr_save(., 'maine_nm_lines', 'Maine 3NM line with US 12, 24NM lines and EEZ')
+
+ggplot() +
+  gglyr('ne_coast') +
+  gglyr('maine_nm_lines') +
+  coord_sf(xlim = c(-72, -67), ylim = c(42, 45))
+
+```
+## Retrieve comment from layer
+
+```{r}
+# Can retrieve comment from layer by passing verbose = T
+gglyr('gom_bathy', verbose = T)
+```
+## Zoom a ggplot to the bounds of an SF layer
+
+`gg_bound_sf(sf_layer)`
+
+
+## Make nice maps quickly
+
+```{r}
+ggplot() +
+  gglyr('gom_bathy') +
+  gglyr('ne_coast') +
+  gglyr('maine_zone_dist_no_ol') +
+  gglyr('maine_nm_lines') +
+  # Bound it to outline of distance to shore
+  gg_bound_sf(distance) +
+  labs(x = 'Longitude', y = 'Latitude')
+```
+
+## What if the source spatial data changes??
+
+If the source spatial data changes or is updated, right a function to retrieve the data from the source file or URL and return a `ggproto`. The function can receive additional arguments, ie:
+
+```{r}
+random_maine_points <- function(points) {
+  lats <- runif(points, min = 43, max = 45)
+  lons <- runif(points, min = -70, max = -67)
+  points <- data.frame(lat = lats, lon = lons) %>%
+    st_as_sf(coords = c('lon', 'lat'), crs = 4326)
+  p <- geom_sf(data = points, color = 'red', size = 2)
+  return(p)
+}
+
+gglyr_save(random_maine_points, 'random_points', 'Generate random points off Maine.')
+
+
+ggplot() +
+  gglyr('ne_coast') +
+  gglyr('random_points', points = 15) +
+  gg_bound_sf(distance) +
+  labs('15 Random Points')
+  
+ggplot() +
+  gglyr('ne_coast') +
+  gglyr('random_points', points = 100) +
+  gg_bound_sf(distance) +
+  labs('100 Random Points')
+
+
+```
+
+
+
+
+
+
+
+
+
